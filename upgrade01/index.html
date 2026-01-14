@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Year Progress — 2026</title>
+    <title>2026 Progress</title>
     <style>
         :root {
             --rainbow-0: #ef4444;
@@ -20,18 +20,11 @@
             --text: #eef2ff;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0
-        }
-
         html,
         body {
             height: 100%;
             background: linear-gradient(180deg, #0b0f16, #0f1419);
             color: var(--text);
-            font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif
         }
 
         .wrap {
@@ -42,7 +35,7 @@
 
         .year-title {
             font-weight: 700;
-            font-size: 20px;
+            font-size: 30px;
             margin-bottom: 12px
         }
 
@@ -63,13 +56,13 @@
         }
 
         .progress-label {
-            font-size: 14px;
+            font-size: 20px;
             color: var(--muted)
         }
 
         .progress-percent {
             font-weight: 800;
-            font-size: 18px
+            font-size: 20px
         }
 
         .bar-wrap {
@@ -152,23 +145,23 @@
             position: absolute;
             left: 50%;
             bottom: calc(100% + 6px);
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
+            transform: translateX(-50%); /* 中央揃え */
             color: #fff;
             padding: 6px 8px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 20px;
             white-space: nowrap;
         }
 
         @media (max-width:480px) {
             .days-grid {
                 gap: 5px;
+                /* grid-template-columnsはminmaxの最小値を10pxに変更 */
                 grid-template-columns: repeat(auto-fill, minmax(10px, 1fr))
             }
-
+            /* ホバー時のフォントサイズを変更 */
             .day-cell[data-date]:hover::after {
-                font-size: 11px
+                font-size: 18px
             }
         }
     </style>
@@ -176,17 +169,20 @@
 
 <body>
     <div class="wrap">
-        <div class="year-title">Year — 2026</div>
+        <div class="year-title">2026年 どれだけ進んだか</div>
 
-        <div class="compact-progress" aria-hidden="false">
+        <div class="compact-progress" aria-hidden="false"> 
             <div class="progress-row">
                 <div class="progress-label">年間進捗（2026）</div>
                 <div class="progress-percent" id="percentLabel">0%</div>
             </div>
+            <!-- 進捗バーの表示 -->
             <div class="bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                 <div class="bar" id="progressBar"></div>
             </div>
-            <div style="display:flex;gap:12px;margin-top:10px;color:var(--muted);font-size:13px">
+
+            <!-- 日数情報の表示 -->
+            <div style="display:flex;gap:12px;margin-top:10px;color:var(--muted);font-size:15px">
                 <div>総日数: <strong id="totalDays">365</strong></div>
                 <div>経過: <strong id="passedDays">0</strong></div>
                 <div>残り: <strong id="remainingDays">0</strong></div>
@@ -194,6 +190,7 @@
         </div>
 
         <div class="grid-wrap" aria-label="365日カレンダー">
+            <!--falseの理由は、カレンダーの表示を制限するため-->
             <div class="days-grid" id="daysGrid" aria-hidden="false"></div>
         </div>
     </div>
@@ -223,14 +220,18 @@
                 // - FIXED_YEAR が過去なら全日数を passed にする
                 // - FIXED_YEAR が未来なら passed = 0
                 let passed = 0;
+                //もしgetFullYear()がFIXED_YEARと同じなら、dayOfYear(now)をpassedに代入
                 if (FIXED_YEAR === now.getFullYear()) {
                     passed = dayOfYear(now);
-                } else if (FIXED_YEAR < now.getFullYear()) {
+                } 
+                //もしgetFullYear()がFIXED_YEARより大きいなら、totalをpassedに代入
+                else if (FIXED_YEAR < now.getFullYear()) {
                     passed = total;
                 } else {
                     passed = 0;
                 }
-
+                //残り日数とパーセント計算
+                //0を下回らないようにMath.maxで制限
                 const remaining = Math.max(0, total - passed);
                 const percent = Math.round((passed / total) * 100);
 
