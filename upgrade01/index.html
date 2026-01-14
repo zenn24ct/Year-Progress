@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Year Progress</title>
+    <title>Year Progress — 2026</title>
     <style>
         :root {
             --rainbow-0: #ef4444;
@@ -21,8 +21,7 @@
         }
 
         * {
-            box-sizing: border-box; 
-            /* border-boxの意味は、要素の幅と高さにpaddingとborderを含めることです。 */
+            box-sizing: border-box;
             margin: 0;
             padding: 0
         }
@@ -41,33 +40,10 @@
             padding: 18px
         }
 
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 12px 
-            /*margin-bottomは下の要素との間隔を指定するプロパティです。*/
-        }
-
         .year-title {
             font-weight: 700;
-            font-size: 50px
-        }
-
-        .year-controls {
-            display: flex;
-            gap: 8px;
-            align-items: center
-        }
-
-        .btn {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            color: var(--muted);
-            padding: 8px 10px;
-            border-radius: 8px;
-            cursor: pointer
+            font-size: 20px;
+            margin-bottom: 12px
         }
 
         .compact-progress {
@@ -93,11 +69,11 @@
 
         .progress-percent {
             font-weight: 800;
-            font-size: 20px
+            font-size: 18px
         }
 
         .bar-wrap {
-            height: 20px;
+            height: 12px;
             background: rgba(255, 255, 255, 0.04);
             border-radius: 999px;
             overflow: hidden
@@ -125,7 +101,7 @@
 
         .day-cell {
             aspect-ratio: 1;
-            border-radius: 5px;
+            border-radius: 4px;
             background: rgba(255, 255, 255, 0.04);
             position: relative;
             cursor: default;
@@ -171,7 +147,6 @@
             background: var(--rainbow-6)
         }
 
-        /* tooltip (simple) */
         .day-cell[data-date]:hover::after {
             content: attr(data-date);
             position: absolute;
@@ -201,18 +176,11 @@
 
 <body>
     <div class="wrap">
-        <div class="topbar">
-            <div class="year-title" id="yearTitle">2026年</div>
-            <div class="year-controls">
-                <button class="btn" id="prevBtn" aria-label="前年">←</button>
-                <button class="btn" id="todayBtn" aria-label="今年">今年</button>
-                <button class="btn" id="nextBtn" aria-label="翌年">→</button>
-            </div>
-        </div>
+        <div class="year-title">Year — 2026</div>
 
         <div class="compact-progress" aria-hidden="false">
             <div class="progress-row">
-                <div class="progress-label">年間進捗</div>
+                <div class="progress-label">年間進捗（2026）</div>
                 <div class="progress-percent" id="percentLabel">0%</div>
             </div>
             <div class="bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -232,18 +200,13 @@
 
     <script>
         (function () {
-            const yearTitle = document.getElementById('yearTitle');
+            const FIXED_YEAR = 2026;          // ← 年度をここで固定
             const percentLabel = document.getElementById('percentLabel');
             const progressBar = document.getElementById('progressBar');
             const totalDaysEl = document.getElementById('totalDays');
             const passedDaysEl = document.getElementById('passedDays');
             const remainingDaysEl = document.getElementById('remainingDays');
             const daysGrid = document.getElementById('daysGrid');
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const todayBtn = document.getElementById('todayBtn');
-
-            let currentYear = (new Date()).getFullYear();
 
             function isLeapYear(y) { return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0); }
             function totalDaysOf(y) { return isLeapYear(y) ? 366 : 365; }
@@ -251,20 +214,27 @@
             function pad(n) { return String(n).padStart(2, '0'); }
             function formatDate(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
 
-            function render(year) {
+            function renderFixedYear() {
                 const now = new Date();
-                const isCurrentYear = year === now.getFullYear();
-                const total = totalDaysOf(year);
+                const total = totalDaysOf(FIXED_YEAR);
 
+                // passed の計算：
+                // - FIXED_YEAR が現在の年なら今日までを passed にする
+                // - FIXED_YEAR が過去なら全日数を passed にする
+                // - FIXED_YEAR が未来なら passed = 0
                 let passed = 0;
-                if (isCurrentYear) passed = dayOfYear(now);
-                else if (year < now.getFullYear()) passed = total;
+                if (FIXED_YEAR === now.getFullYear()) {
+                    passed = dayOfYear(now);
+                } else if (FIXED_YEAR < now.getFullYear()) {
+                    passed = total;
+                } else {
+                    passed = 0;
+                }
 
                 const remaining = Math.max(0, total - passed);
                 const percent = Math.round((passed / total) * 100);
 
-                // update UI values
-                yearTitle.textContent = `Year — ${year}`;
+                // UI 更新
                 totalDaysEl.textContent = total;
                 passedDaysEl.textContent = passed;
                 remainingDaysEl.textContent = remaining;
@@ -272,12 +242,14 @@
                 progressBar.style.width = percent + '%';
                 progressBar.parentElement.setAttribute('aria-valuenow', percent);
 
-                // build grid
+                // グリッド生成
                 daysGrid.innerHTML = '';
-                const todayIndex = isCurrentYear ? dayOfYear(now) : -1;
+                const todayIndex = (FIXED_YEAR === now.getFullYear()) ? dayOfYear(now) : -1;
 
+                // build cells (1..total)
+                const frag = document.createDocumentFragment();
                 for (let i = 1; i <= total; i++) {
-                    const date = new Date(year, 0, i);
+                    const date = new Date(FIXED_YEAR, 0, i);
                     const cell = document.createElement('div');
                     cell.className = 'day-cell';
                     cell.setAttribute('data-date', formatDate(date));
@@ -287,21 +259,19 @@
                         const idx = (i - 1) % 7;
                         cell.classList.add('rainbow-' + idx);
                     }
-                    if (i === todayIndex) cell.classList.add('today');
-
-                    daysGrid.appendChild(cell);
+                    if (i === todayIndex) {
+                        cell.classList.add('today');
+                    }
+                    frag.appendChild(cell);
                 }
+                daysGrid.appendChild(frag);
             }
-            /* 年度切り替えボタンのイベントリスナー登録 */
-            prevBtn.addEventListener('click', () => { currentYear--; render(currentYear); });
-            nextBtn.addEventListener('click', () => { currentYear++; render(currentYear); });
-            todayBtn.addEventListener('click', () => { currentYear = (new Date()).getFullYear(); render(currentYear); });
 
-            // 最初の描画
-            render(currentYear);
+            // 初回レンダリング
+            renderFixedYear();
 
-            // ここで1分ごとに更新して、進捗が変わった場合に対応する
-            setInterval(() => render(currentYear), 60 * 1000);
+            // 日跨ぎに備えて 1 分ごとに再描画（今日の変化を反映）
+            setInterval(renderFixedYear, 60 * 1000);
         })();
     </script>
 </body>
