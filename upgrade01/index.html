@@ -145,7 +145,8 @@
             position: absolute;
             left: 50%;
             bottom: calc(100% + 6px);
-            transform: translateX(-50%); /* 中央揃え */
+            transform: translateX(-50%);
+            /* 中央揃え */
             color: #fff;
             padding: 6px 8px;
             border-radius: 6px;
@@ -159,6 +160,7 @@
                 /* grid-template-columnsはminmaxの最小値を10pxに変更 */
                 grid-template-columns: repeat(auto-fill, minmax(10px, 1fr))
             }
+
             /* ホバー時のフォントサイズを変更 */
             .day-cell[data-date]:hover::after {
                 font-size: 18px
@@ -171,7 +173,7 @@
     <div class="wrap">
         <div class="year-title">2026年 どれだけ進んだか</div>
 
-        <div class="compact-progress" aria-hidden="false"> 
+        <div class="compact-progress" aria-hidden="false">
             <div class="progress-row">
                 <div class="progress-label">年間進捗（2026）</div>
                 <div class="progress-percent" id="percentLabel">0%</div>
@@ -197,7 +199,7 @@
 
     <script>
         (function () {
-            const FIXED_YEAR = 2026;          // ← 年度をここで固定
+            const FIXED_YEAR = 2026;  // ← 年度をここで固定
             const percentLabel = document.getElementById('percentLabel');
             const progressBar = document.getElementById('progressBar');
             const totalDaysEl = document.getElementById('totalDays');
@@ -205,11 +207,31 @@
             const remainingDaysEl = document.getElementById('remainingDays');
             const daysGrid = document.getElementById('daysGrid');
 
-            function isLeapYear(y) { return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0); }
-            function totalDaysOf(y) { return isLeapYear(y) ? 366 : 365; }
-            function dayOfYear(d) { const start = new Date(d.getFullYear(), 0, 1); return Math.floor((d - start) / (24 * 60 * 60 * 1000)) + 1; }
-            function pad(n) { return String(n).padStart(2, '0'); }
-            function formatDate(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+            /* 閏年判定を行う関数 */
+            function isLeapYear(y) { 
+                return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0); 
+            }
+            // 年間の日数を返す関数
+            function totalDaysOf(y) { 
+                return isLeapYear(y) ? 366 : 365; 
+            }
+
+            // 年初からの日数を返す関数
+            function dayOfYear(d) { 
+                //Date(d.getFullYear(), 0, 1)はその年の1月1日を表すDateオブジェクトを作成
+                const start = new Date(d.getFullYear(), 0, 1); 
+                //その年の1月1日からdまでの経過時間をミリ秒で計算し、1日のミリ秒数で割って日数に変換。
+                //ミリ秒数とは、24時間×60分×60秒×1000ミリ秒のこと
+                return Math.floor((d - start) / (24 * 60 * 60 * 1000)) + 1; 
+            }
+            // 2桁ゼロ埋め関数
+            function pad(n) { 
+                return String(n).padStart(2, '0'); 
+            }
+
+            function formatDate(d) { 
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; 
+            }
 
             function renderFixedYear() {
                 const now = new Date();
@@ -223,7 +245,7 @@
                 //もしgetFullYear()がFIXED_YEARと同じなら、dayOfYear(now)をpassedに代入
                 if (FIXED_YEAR === now.getFullYear()) {
                     passed = dayOfYear(now);
-                } 
+                }
                 //もしgetFullYear()がFIXED_YEARより大きいなら、totalをpassedに代入
                 else if (FIXED_YEAR < now.getFullYear()) {
                     passed = total;
@@ -247,24 +269,34 @@
                 daysGrid.innerHTML = '';
                 const todayIndex = (FIXED_YEAR === now.getFullYear()) ? dayOfYear(now) : -1;
 
-                // build cells (1..total)
+                // fragで一時的にドキュメントフラグメントを作成
                 const frag = document.createDocumentFragment();
+                /* この部分では、1日からtotal日までループして各日のセルを作成しています。
+                   各セルには日付の情報がdata-date属性として設定され、過去の日付には'rainbow'クラスが順番に適用されます。
+                   今日の日付には'today'クラスが適用され、視覚的に強調表示されます。 */
                 for (let i = 1; i <= total; i++) {
                     const date = new Date(FIXED_YEAR, 0, i);
                     const cell = document.createElement('div');
                     cell.className = 'day-cell';
                     cell.setAttribute('data-date', formatDate(date));
 
+                    /* もしiがpassedより小さい場合、つまり過去の日付であれば、
+                       'past'クラスと'rainbow'クラスを順番に適用します。
+                       また、もしiがtodayIndexと等しい場合、'today'クラスを適用します。 */
                     if (i < passed) {
                         cell.classList.add('past');
                         const idx = (i - 1) % 7;
                         cell.classList.add('rainbow-' + idx);
                     }
+
+                    /* 今日の日付の強調表示 */
                     if (i === todayIndex) {
                         cell.classList.add('today');
                     }
+                    // ドキュメントフラグメントにセルを追加。このcellは後でdaysGridに一括追加される
                     frag.appendChild(cell);
                 }
+                //ここで一括でdaysGridにfragを追加
                 daysGrid.appendChild(frag);
             }
 
